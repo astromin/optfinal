@@ -1,3 +1,9 @@
+/* Amanda Strominger
+ * Optimization final Fall 2013
+ * Generates a random sequence of RNA bases of the specified length
+ * Writes a linear program in the file format necessary for glpsol
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
@@ -6,22 +12,23 @@
 
 int main(int argc, char * argv[]){
     FILE *sequence, *glpsol;
-    if (NULL == (sequence = fopen("sequence", "w"))){
-        fprintf(stderr, "Could not open sequence\n");
+    if (NULL == (sequence = fopen(argv[1], "w"))){
+        fprintf(stderr, "Could not open input file.\n");
         exit(EXIT_FAILURE);
     }
-    if (NULL == (glpsol = fopen("folding.lp", "w"))){
-        fprintf(stderr, "Could not open folding.lp\n");
+    if (NULL == (glpsol = fopen(argv[2], "w"))){
+        fprintf(stderr, "Could not open outputfile.\n");
         exit(EXIT_FAILURE);
     }
-    if (argc<2){
-		printf("Don't forget command line arguments!\n");
+    if (argc<4){
+		printf("Don't forget command line arguments!\n Should be input file, output file, sequence length.\n");
 		exit(EXIT_FAILURE);
 	}
-    int seqlen = atoi(argv[1]);
+    int seqlen = atoi(argv[3]);
     int seq[seqlen];
     int bases[] = {'A', 'C', 'G', 'U'};
     int i;
+	//randomly generate sequence
     for (i = 0; i<seqlen; i++){
         int r = rand()%4;
         fputc(bases[r], sequence);
@@ -72,13 +79,14 @@ int main(int argc, char * argv[]){
 			}
 		}
 	}
-
+	//all variables between 0 and 1
     fprintf(glpsol, "Bounds\n");
     for (int j = 0; j<seqlen-1; j++){
         for(int k = j+1; k<seqlen; k++){
             if (seq[k]+seq[j] == 'C' + 'G' || seq[k]+seq[j] == 'A' + 'U') fprintf(glpsol, "0 <=  X%d,%d <= 1\n", j, k);
         }
     }
+	//all variables integer valued
     fprintf(glpsol, "Integers\n");
     for (int j = 0; j<seqlen-1; j++){
         for(int k = j+1; k<seqlen; k++){

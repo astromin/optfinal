@@ -1,3 +1,10 @@
+/* Amanda Strominger
+ * Optimization final Fall 2013
+ * Randomly generates two sequences of RNA bases of the specified length
+ * Creates a file containing an integer program in the format necessary for glpsol
+ * I would like to implement different alpha values for different mismatches
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
@@ -6,26 +13,27 @@
 
 int main(int argc, char * argv[]){
     FILE *sequence, *glpsol;
-    if (NULL == (sequence = fopen("sequence", "w"))){
-        fprintf(stderr, "Could not open sequence\n");
+    if (NULL == (sequence = fopen(argv[1], "w"))){
+        fprintf(stderr, "Could not open input file.\n");
         exit(EXIT_FAILURE);
     }
-    if (NULL == (glpsol = fopen("alignment.lp", "w"))){
-        fprintf(stderr, "Could not open alignment.lp\n");
+    if (NULL == (glpsol = fopen(argv[2], "w"))){
+        fprintf(stderr, "Could not open output file.\n");
         exit(EXIT_FAILURE);
     }
-	if (argc < 5){
-		printf("Don't forget command line arguments!\n Should be seqlen1, seqlen2, alpha, delta. \n");
+	if (argc < 7){
+		printf("Don't forget command line arguments!\n Should be input file, output file, seqlen1, seqlen2, alpha, delta. \n");
 		exit(EXIT_FAILURE);
 	}
-    int seqlen1 = atoi(argv[1]); //length of first sequence
-	int seqlen2 = atoi(argv[2]); //length of second sequence
-	int a = atoi(argv[3]); //alpha = mismatch penalty
-	int d = atoi(argv[4]); //delta = gap penalty
+    int seqlen1 = atoi(argv[3]); //length of first sequence
+	int seqlen2 = atoi(argv[4]); //length of second sequence
+	int a = atoi(argv[5]); //alpha = mismatch penalty
+	int d = atoi(argv[6]); //delta = gap penalty
 	int seq1[seqlen1];
 	int seq2[seqlen2];
     int bases[] = {'A', 'C', 'G', 'U'};
     int i, j, k;
+	//randomly generates two sequences
     for (i = 0; i<seqlen1; i++){
         int r = rand()%4;
         fputc(bases[r], sequence);
@@ -59,7 +67,7 @@ int main(int argc, char * argv[]){
 
     fprintf(glpsol, "Subject To\n");
     //constraints
-	//everything in sequence one must be paired with exactly one thing
+	//everything in seq1 must be paired with exactly one thing
 	for (i = 0; i < seqlen1; i++){
 		for (j = 0; j<seqlen2; j++){
 			fprintf(glpsol, "+ X%d,%d ", i, j); 
@@ -87,6 +95,7 @@ int main(int argc, char * argv[]){
 
     fprintf(glpsol, "Bounds\n");
     //bounds
+	//all variables are between 0 and 1
 	for (i = 0; i<seqlen1; i++){
 		for (j = 0; j<seqlen2; j++){
 			fprintf(glpsol, "0 <= X%d,%d <= 1\n", i, j);
@@ -101,6 +110,7 @@ int main(int argc, char * argv[]){
 
     fprintf(glpsol, "Integers\n");
     //integers
+	//all variables are between 0 and 1
 	for (i = 0; i<seqlen1; i++){
 		for (j = 0; j<seqlen2; j++){
 			fprintf(glpsol, "X%d,%d\n", i, j);
